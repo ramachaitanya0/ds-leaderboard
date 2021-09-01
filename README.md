@@ -1,1 +1,1 @@
-# ds-leaderboard
+# Data Science Leaderboard
