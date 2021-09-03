@@ -34,7 +34,7 @@ def prepare_lb_data():
         ['Name', 'Work Category', 'Work Type', '# Entires', 'Total Reward Points', 'Total Awards Won',
          'Last Presented On', 'Last Awarded On']]
     lb_df = lb_df.drop_duplicates()
-    lb_df.sort_values(["Total Reward Points", "# Entires"], ascending=False, inplace=True)
+    lb_df.sort_values(["Total Reward Points", "# Entires", "Last Presented On"], ascending=False, inplace=True)
     lb_df.insert(0, "Rank", [i + 1 for i in range(len(lb_df))])
     return lb_df
 
@@ -117,4 +117,6 @@ selected = grid_response['selected_rows']
 selected_df = pd.DataFrame(selected)
 if len(selected_df) > 0:
     st.subheader('Contribution History')
-    st.table(weekly_demos_df[weekly_demos_df["Name"].isin(selected_df['Name'].values.tolist())].reset_index(drop=True))
+    filtered_weekly_demos_df = weekly_demos_df[
+        weekly_demos_df["Name"].isin(selected_df['Name'].values.tolist())].reset_index(drop=True)
+    st.table(filtered_weekly_demos_df)
