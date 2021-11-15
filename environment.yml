@@ -114,4 +114,6 @@ dependencies:
     - websocket-client==1.2.1
     - widgetsnbextension==3.5.1
     - yarg==0.1.9
+    - sharepy
+    - openpyxl
 prefix: /Users/budigam.nagaraju/opt/anaconda3/envs/dsl

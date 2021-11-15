@@ -1,15 +1,52 @@
 import streamlit as st
 import pandas as pd
+import sharepy
+import io
+import datetime
+from datetime import datetime,time,date
 from st_aggrid import GridOptionsBuilder, AgGrid, GridUpdateMode, DataReturnMode, JsCode
+
 
 pd.set_option('max_columns', None)
 pd.set_option('max_rows', None)
 
+####  updated code
 
-def prepare_lb_data():
+username = 'karanam.rama@tvsmotor.com'
+password = 'Kramvenu@1221'
+
+# site url
+share_point_url="https://tvshosur.sharepoint.com"
+
+#shared folder location
+share_point_doc_path='/sites/TVSMDataAnalytics/Shared Documents/'
+
+# file path
+file_path = 'DS_Leaderboard/Weekly OOG AI Projects Review.xlsx'
+
+# conncecting  share point using sharepy
+share_conn=sharepy.connect(share_point_url,username=username,password=password)
+
+# loading data from the sharepoint
+def load_share_point_data(path):
+    q = share_point_url+share_point_doc_path+path
+    return io.BytesIO(share_conn.get(q).content)
+
+
+weekly_demos_df = pd.read_excel(load_share_point_data(file_path),engine='openpyxl')
+weekly_demos_df = weekly_demos_df.drop('S.No',axis =1).dropna(subset =['Presented On'])
+weekly_demos_df['Presented On'] = weekly_demos_df['Presented On'].dt.date
+#### end of updated code
+
+def prepare_lb_data(start_date, end_date):
     awards_df = pd.read_csv('data/awards.csv')
     rewards_df = pd.read_csv('data/rewards.csv')
-    weekly_demos_df = pd.read_csv('data/weekly_demos.csv')
+    # weekly_demos_df = pd.read_csv('data/weekly_demos.csv')
+    ###
+    weekly_demos_df = pd.read_excel(load_share_point_data(file_path),engine='openpyxl').drop('S.No',axis =1).dropna(subset =['Presented On'])
+    weekly_demos_df['Presented On'] = weekly_demos_df['Presented On'].dt.date
+    weekly_demos_df = weekly_demos_df[(weekly_demos_df['Presented On']>= start_date)&(weekly_demos_df['Presented On']<=end_date)]
+    ###
 
     user_agg_df = weekly_demos_df.merge(rewards_df)
     user_agg_df = user_agg_df.merge(awards_df, how='left')
@@ -56,6 +93,12 @@ st.set_page_config(  # Alternate names: setup_page, page, layout
 st.title("Data Science Leaderboard")
 st.write("\n")
 st.write("\n")
+st.header('Date Picker  ')
+initial_date = datetime.strptime('2021-01-01','%Y-%m-%d')
+start_date =  st.date_input('start date',value =initial_date)
+# start_date =  st.date_input('start date')
+end_date = st.date_input('end date')
+
 
 grid_height = 350
 rowMultiSelectWithClick = True
@@ -66,8 +109,10 @@ use_checkbox = False
 enable_pagination = True
 paginationPageSize = 5
 
+
+
 # load leaderboard data
-df = prepare_lb_data()
+df = prepare_lb_data(start_date,end_date)
 
 # Infer basic colDefs from dataframe types
 gb = GridOptionsBuilder.from_dataframe(df)
@@ -110,7 +155,10 @@ grid_response = AgGrid(
     allow_unsafe_jscode=True,  # Set it to True to allow jsfunction to be injected
     theme='material'
 )
-weekly_demos_df = pd.read_csv('data/weekly_demos.csv')
+
+weekly_demos_df = pd.read_excel(load_share_point_data(file_path),engine='openpyxl').drop('S.No',axis =1).dropna(subset =['Presented On'])
+weekly_demos_df['Presented On'] = weekly_demos_df['Presented On'].dt.date
+weekly_demos_df = weekly_demos_df[(weekly_demos_df['Presented On']>= start_date)&(weekly_demos_df['Presented On']<=end_date)]
 
 df = grid_response['data']
 selected = grid_response['selected_rows']
@@ -120,3 +168,5 @@ if len(selected_df) > 0:
     filtered_weekly_demos_df = weekly_demos_df[
         weekly_demos_df["Name"].isin(selected_df['Name'].values.tolist())].reset_index(drop=True)
     st.table(filtered_weekly_demos_df)
+
+
